@@ -112,7 +112,7 @@ def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame) -> pd.DataF
         
         # while hr_datetime < st_start, all RHR
         while (hr_datetime[hr_i] < st_datetime_start[st_i]):
-            columns = helper.fill_columns(hr_i, columns, source_columns)
+            columns = helper.fill_columns_applewatch(hr_i, columns, source_columns)
             hr_i += 1
             if hr_i + 1 >= len(df_hr.Start_Time):  break
         
@@ -136,7 +136,7 @@ def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame) -> pd.DataF
         if hr_i >= len(hr_datetime) or st_i >= len(df_st.Start_Time):  break  
         
     while hr_i < len(hr_datetime):
-        columns = helper.fill_columns(hr_i, columns, source_columns)
+        columns = helper.fill_columns_applewatch(hr_i, columns, source_columns)
         if hr_i + 1 >= len(hr_datetime):  break
         hr_i += 1
 
