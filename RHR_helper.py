@@ -16,12 +16,6 @@ def fill_columns(index: int, columns: list, source_columns: list) -> list:
         columns[i].append(source_columns[i][index])
     return columns
 
-def fill_columns_applewatch(index: int, columns: list, source_columns: list) -> list:
-    if source_columns[5][index] >= 200 or source_columns[5][index] <= 30:  return columns
-    for i in range(len(columns)):
-        columns[i].append(source_columns[i][index])
-    return columns
-
 """
 Description: The function converts str date, "%Y-%m-%d", and str time, "%H:%M:%S", to datetime object: "%Y-%m-%d %H:%M:%S"
 params: df -> dataframe of EITHER hr.csv or st.csv 

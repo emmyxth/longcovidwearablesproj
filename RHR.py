@@ -98,9 +98,9 @@ def extract_rhr_fitbit(df_hr: pd.DataFrame, df_st: pd.DataFrame) -> pd.DataFrame
 
 
 def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame) -> pd.DataFrame:
-    device_col, start_date_col, end_date_col, start_time_col, end_time_col, value_col, tag_col, type_col = [], [], [], [], [], [], [], []
-    columns = [device_col, start_date_col, end_date_col, start_time_col, end_time_col, value_col, tag_col, type_col]
-    source_columns = [df_hr.Device, df_hr.Start_Date, df_hr.End_Date, df_hr.Start_Time, df_hr.End_Time, df_hr.Value, df_hr.Tag, df_hr.Type]
+    device_col, start_date_col, start_time_col, value_col = [], [], [], []
+    columns = [device_col, start_date_col, start_time_col, value_col]
+    source_columns = [df_hr.Device, df_hr.Start_Date, df_hr.Start_Time, df_hr.Value]
     
     # get converted datetime obj for both hr and st data 
     hr_datetime = helper.get_datetime_list(df_hr, "Start")
@@ -112,9 +112,9 @@ def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame) -> pd.DataF
         
         # while hr_datetime < st_start, all RHR
         while (hr_datetime[hr_i] < st_datetime_start[st_i]):
-            columns = helper.fill_columns_applewatch(hr_i, columns, source_columns)
+            columns = helper.fill_columns(hr_i, columns, source_columns)
             hr_i += 1
-            if hr_i + 1 >= len(df_hr.Start_Time):  break
+            if hr_i  >= len(df_hr.Start_Time):  break
         
         if hr_i >= len(hr_datetime) or st_i >= len(df_st.Start_Time):  break  
         
@@ -136,9 +136,9 @@ def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame) -> pd.DataF
         if hr_i >= len(hr_datetime) or st_i >= len(df_st.Start_Time):  break  
         
     while hr_i < len(hr_datetime):
-        columns = helper.fill_columns_applewatch(hr_i, columns, source_columns)
-        if hr_i + 1 >= len(hr_datetime):  break
+        columns = helper.fill_columns(hr_i, columns, source_columns)
         hr_i += 1
+        if hr_i >= len(hr_datetime):  break
 
     df = helper.create_df(columns)
     
