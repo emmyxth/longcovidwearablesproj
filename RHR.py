@@ -53,95 +53,104 @@ hr_starttime is either (1) before st_starttime or (2) after st_starttime.
             it is RHR 
     repeat 
 """
-def extract_rhr_fitbit(df_hr: pd.DataFrame, df_st: pd.DataFrame) -> pd.DataFrame:
-    # express each df.column as a list, where we will populate 
+
+def extract_rhr_fitbit(df_hr: pd.DataFrame, df_st: pd.DataFrame):
+    # check if it has enough columns to compute 
+    if not helper.check_runnable(df_hr, df_st, "Fitbit"):  return helper.create_df([[],[],[],[]])
+    # columns to fill. Those columns have source, ensured by the above function 
     device_col, start_date_col, start_time_col, value_col = [], [], [], []
     columns = [device_col, start_date_col, start_time_col, value_col]
-    source_columns = [df_hr.Device, df_hr.Start_Date, df_hr.Start_Time, df_hr.Value]
-
+    
     # get converted datetime obj for both hr and st data 
-    hr_datetime = helper.get_datetime_list(df_hr, "Start")
-    st_datetime = helper.get_datetime_list(df_st, "Start")
-        
+    
     hr_i, st_i = 0, 0
     while hr_i < len(df_hr.Start_Time) and st_i < len(df_st.Start_Time):
+        # get updated datetime
+        hr_datetime, st_datetime = helper.get_datetime(df_hr, hr_i), helper.get_datetime(df_st, st_i)
         
-        # while hr_datetime is before st_datetime, all hr are RHR
-        while (hr_datetime[hr_i] < st_datetime[st_i]):
-            # it is RHR
-            columns = helper.fill_columns(hr_i, columns, source_columns)
+        while (hr_datetime < st_datetime):
+            print(hr_datetime, st_datetime)
+            # it is RHR 
+            columns = helper.fill_columns(hr_i, columns, df_hr)
             hr_i += 1
             if hr_i >= len(df_hr.Start_Time):  break
+            hr_datetime = helper.get_datetime(df_hr, hr_i)
         
-        if hr_i >= len(hr_datetime) or st_i >= len(st_datetime):  break  
+        if hr_i >= len(df_hr.Start_Time) or st_i >= len(df_st.Start_Time):  break  
         
         # hr_datetime must be greater than st_datetime, but not nec abt hr_datetime[hr_i] - 10 min 
-        while (hr_datetime[hr_i] >= st_datetime[st_i]):
+        while (hr_datetime >= st_datetime):
+            print(hr_datetime, st_datetime)
             # in between 
-            if (hr_datetime[hr_i] - timedelta(minutes=10) <= st_datetime[st_i]) and (st_datetime[st_i] <= hr_datetime[hr_i]):
+            if (hr_datetime - timedelta(minutes=10) <= st_datetime) and (st_datetime <= hr_datetime):
                 # not rhr 
-                hr_i += 1 
+                hr_i += 1
                 if hr_i >= len(df_hr.Start_Time):  break
-            # hr_datetime[hr_i] - 10 min > st_datetime 
+                hr_datetime = helper.get_datetime(df_hr, hr_i)
             else:
                 st_i += 1
-                if st_i >= len(st_datetime):  break
-        
-    while hr_i < len(hr_datetime):
-        columns = helper.fill_columns(hr_i, columns, source_columns)
+                if st_i >= len(df_st.Start_Time):  break
+                st_datetime = helper.get_datetime(df_st, st_i)
+              
+    while hr_i < len(df_hr.Start_Time):
+        # yes rhr
+        columns = helper.fill_columns(hr_i, columns, df_hr) 
         hr_i += 1
-        if hr_i >= len(hr_datetime):  break
-    
+        if hr_i >= len(df_hr.Start_Time):  break
+        hr_datetime = helper.get_datetime(df_hr, hr_i)
+            
     df = helper.create_df(columns)
     
-    return df
+    return df      
 
 
-def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame) -> pd.DataFrame:
+def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame):
+    # check if it has enough columns to compute 
+    if not helper.check_runnable(df_hr, df_st, "Apple Watch"):  return helper.create_df([[],[],[],[]])
+    # columns to fill. Those columns have source, ensured by the above function 
     device_col, start_date_col, start_time_col, value_col = [], [], [], []
     columns = [device_col, start_date_col, start_time_col, value_col]
-    source_columns = [df_hr.Device, df_hr.Start_Date, df_hr.Start_Time, df_hr.Value]
-    
-    # get converted datetime obj for both hr and st data 
-    hr_datetime = helper.get_datetime_list(df_hr, "Start")
-    st_datetime_start = helper.get_datetime_list(df_st, "Start")
-    st_datetime_end = helper.get_datetime_list(df_st, "End")
     
     hr_i, st_i = 0, 0
     while hr_i < len(df_hr.Start_Time) and st_i < len(df_st.Start_Time):
         
+        hr_datetime = helper.get_datetime_applewatch(df_hr, hr_i, "Start")
+        st_start_time, st_end_time = helper.get_datetime_applewatch(df_st, st_i, "Start"), helper.get_datetime_applewatch(df_st, st_i, "End")
+        
         # while hr_datetime < st_start, all RHR
-        while (hr_datetime[hr_i] < st_datetime_start[st_i]):
-            columns = helper.fill_columns(hr_i, columns, source_columns)
+        while (hr_datetime < st_start_time):
+            columns = helper.fill_columns(hr_i, columns, df_hr)
             hr_i += 1
-            if hr_i  >= len(df_hr.Start_Time):  break
-        
-        if hr_i >= len(hr_datetime) or st_i >= len(df_st.Start_Time):  break  
-        
+            if hr_i >= len(df_hr.Start_Date):  break 
+            hr_datetime = helper.get_datetime_applewatch(df_hr, hr_i, "Start")
+#             print("success")
+            
+        if hr_i >= len(df_hr.Start_Time) or st_i >= len(df_st.Start_Time):  break 
+            
         # now, hr_datetime >= st_start_time must hold true 
         # loop while hr_datetime > st_datetime_start
-        while (hr_datetime[hr_i] >= st_datetime_start[st_i]):
+        while (hr_datetime >= st_start_time):
             # case 1: st_start <= hr_time <= st_end, then not RHR
             # case 2: st_end < hr_time, but hr_time - 10 min <= st_end
-            if ((st_datetime_start[st_i] <= hr_datetime[hr_i] and hr_datetime[hr_i] <= st_datetime_end[st_i]) or
-                hr_datetime[hr_i] - timedelta(minutes=10) <= st_datetime_end[st_i]):
+            if ((st_start_time <= hr_datetime and hr_datetime <= st_end_time) or 
+               hr_datetime - timedelta(minutes=10) <= st_end_time):
                 hr_i += 1
-                if hr_i >= len(hr_datetime):  break
-            # case 3: st_end < hr_time & hr_time - 10 min <= st_end, but next st can cause 
-            #         case 1 or case 2 
-            else: 
+                if hr_i >= len(df_hr.Start_Date):  break
+                hr_datetime = helper.get_datetime_applewatch(df_hr, hr_i, "Start")
+            else:
                 st_i += 1
-                if st_i >= len(st_datetime_start):  break
+                if st_i >= len(df_st.Start_Date):  break 
+                st_start_time, st_end_time = helper.get_datetime_applewatch(df_st, st_i, "Start"), helper.get_datetime_applewatch(df_st, st_i, "End")
         
-        if hr_i >= len(hr_datetime) or st_i >= len(df_st.Start_Time):  break  
-        
-    while hr_i < len(hr_datetime):
-        columns = helper.fill_columns(hr_i, columns, source_columns)
-        hr_i += 1
-        if hr_i >= len(hr_datetime):  break
+        if hr_i >= len(df_hr.Start_Time) or st_i >= len(df_st.Start_Time):  break 
 
-    df = helper.create_df(columns)
+    while hr_i < len(df_hr.Start_Time):
+        columns = helper.fill_columns(hr_i, columns, df_hr)
+        hr_i += 1
+        if hr_i >= len(df_hr.Start_Date):  break
+        hr_datetime = helper.get_datetime_applewatch(df_hr, hr_i, "Start")
     
+    df = helper.create_df(columns)
     return df
 
 
