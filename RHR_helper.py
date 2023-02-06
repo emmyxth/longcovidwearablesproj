@@ -11,6 +11,8 @@ returns:
 columns -> updated columns list, where new "row" has been appended 
 """
 def fill_columns(index: int, columns: list, df: pd.DataFrame):
+    if isinstance(df.Value[index], (str, list, tuple) ): 
+        return columns 
     if df.Value[index] > 200 or df.Value[index] < 30:
         return columns 
     # device 

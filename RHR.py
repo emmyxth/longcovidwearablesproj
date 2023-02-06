@@ -21,7 +21,7 @@ def extract_rhr(participant_id: str) -> None:
     # find hr and st csv file and check if it exists
     csv_file_path_hr = glob.glob(start_path + "/" + participant_id + "/*hr.csv") # hr files 
     csv_file_path_st = glob.glob(start_path + "/" + participant_id + "/*st.csv") # st files
-    if len(csv_file_path_hr) == 0 and len(csv_file_path_st) == 0:  return  # returns None if no hr/st file found
+    if len(csv_file_path_hr) == 0 or len(csv_file_path_st) == 0:  return  # returns None if no hr/st file found
     # open csv file 
     df_hr = pd.read_csv(csv_file_path_hr[0])
     df_st = pd.read_csv(csv_file_path_st[0])
