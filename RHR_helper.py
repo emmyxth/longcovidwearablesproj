@@ -10,54 +10,59 @@ source_columns -> 2-D list, where each sub-list are columns of df_hr
 returns: 
 columns -> updated columns list, where new "row" has been appended 
 """
-def fill_columns(index: int, columns: list, source_columns: list) -> list:
-    if source_columns[3][index] >= 200 or source_columns[3][index] <= 30:  return columns
-    for i in range(len(columns)):
-        columns[i].append(source_columns[i][index])
+def fill_columns(index: int, columns: list, df: pd.DataFrame):
+    if (not isinstance(df.Value[index], (int, float))) or df.Value[index] > 200 or df.Value[index] < 30:
+        return columns 
+    # device 
+    columns[0].append(df.Device[index])
+    columns[1].append(df.Start_Date[index])
+    columns[2].append(df.Start_Time[index])
+    columns[3].append(df.Value[index])
+    
     return columns
 
-"""
-Description: The function converts str date, "%Y-%m-%d", and str time, "%H:%M:%S", to datetime object: "%Y-%m-%d %H:%M:%S"
-params: df -> dataframe of EITHER hr.csv or st.csv 
-index: index of df's column: e.g. index = 5 if we want to access the str date df.Start_date[index]
-returns: converted & combined datetime of the form "%Y-%m-%d %H:%M:%S"
-"""
-def convert_datetime_to_datetime_obj(start_date_list, start_time_list, index):
-    if index >= len(start_date_list): return 
-    str_date, str_time = start_date_list[index], start_time_list[index]
+# checks if it has enough columns to be runnable 
+def check_runnable(df_hr, df_st, mode):
+    hr_req_columns = ["Device", "Start_Date", "Start_Time", "Value"]
+    for col in hr_req_columns:
+        if col not in df_hr.columns:
+            return False
+    if mode == "Fitbit":
+        st_req_columns = ["Device", "Start_Date", "Start_Time", "Value"]
+        for col in st_req_columns:
+            if col not in df_st.columns:
+                return False
+    elif mode == "Apple Watch":
+        st_req_columns = ["Device", "Start_Date", "Start_Time", "Value", "End_Date", "End_Time"]
+        for col in st_req_columns:
+            if col not in df_st.columns:
+                print("false")
+                return False
+    else:
+        return False
+    return True
+
+def get_datetime(df: pd.DataFrame, index):
+    str_date, str_time = str(df.Start_Date[index]), str(df.Start_Time[index])
+    # if str_date is None or str_time is None: return  
     date = datetime.strptime(str_date, "%Y-%m-%d")
     time = datetime.strptime(str_time, "%H:%M:%S").time()
     date_time = datetime.combine(date, time)
-    return date_time
+    return date_time 
 
-"""
-params:
-df -> dataframe to get the string datetime
-mode -> "Start" or "End"
-
-returns:
-datetime_res -> list of datetime objects. 
-
-Description:
-Use this function in the beginning of extract_rhr function to convert all 
-str datetime to datetime object. 
-"""
-def get_datetime_list(df: pd.DataFrame, mode: str) -> list:
-    datetime_res = []
-    str_date, str_time = None, None
+def get_datetime_applewatch(df: pd.DataFrame, index, mode):
+    str_date, str_time = "", ""
     if mode == "Start":
-        str_date = df.Start_Date
-        str_time = df.Start_Time
-    else: 
-        str_date = df.End_Date
-        str_time = df.End_Time
+        str_date, str_time = str(df.Start_Date[index]), str(df.Start_Time[index])
+    else:
+        str_date, str_time = str(df.End_Date[index]), str(df.End_Time[index])
+        
+    # if str_date is None or str_time is None: return  
+    date = datetime.strptime(str_date, "%Y-%m-%d")
+    time = datetime.strptime(str_time, "%H:%M:%S").time()
+    date_time = datetime.combine(date, time)
+    return date_time  
 
-    for i in range(len(str_date)):
-        datetime_obj = convert_datetime_to_datetime_obj(str_date, str_time, i)
-        if datetime_obj != None:
-            datetime_res.append(datetime_obj)
-
-    return datetime_res
 
 """
 params: 
