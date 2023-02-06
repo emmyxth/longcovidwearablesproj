@@ -150,7 +150,10 @@ def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame) -> pd.DataF
 if __name__ == "__main__":
     #### EDIT HERE, DEPENDING ON HOW BASH SCRIPT USES THIS .py FILE ####
     # if command line format is: RHR.py [participant_id], then:
-    participant_id = sys.argv[1]
+    participant_id = os.path.basename(sys.argv[1])
+    print("participant_id: ", participant_id)
+
     ### EDIT THE ABOVE IF DIFFERNT FORMAT ### 
 
     extract_rhr(participant_id)
+    print("Done extracting RHR for participant: ", participant_id)
