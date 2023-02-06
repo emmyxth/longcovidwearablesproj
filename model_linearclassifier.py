@@ -8,17 +8,16 @@ from sklearn.linear_model import LogisticRegression
 
 class LinearClassifier():
     #say everything is positive/negative
-    def __init__(self, data, target):
+    def __init__(self):
         """
         @param data : numpy array (samples, features)
         """
-        self.data = data
-        self.nsamples = len(data)
-        self.nfeatures = data.shape[1] #MAY NEED TO CHANGE - DEPENDS ON TYPE
-        self.target = target
         self.lr_model = LogisticRegression()
 
-    #returns numpy array of predictions based on majority class classifier (samples, 1) (samples, 1)
-    def fitdata(self):
-        self.lr_model.fit(self.data, self.target)
+    #returns numpy array of predictions based on majority class classifier (samples, 1)
+    def fitdata(self, data, target):
+        self.lr_model.fit(data, target)
     
+    #returns array (samples, 1) predictions
+    def predict(self, data):
+        return self.lr_model.predict(data)
