@@ -32,7 +32,7 @@ def count_len_csv(files, path):
     return total_count
 
 
-# In[17]:
+# In[4]:
 
 
 def device_length(files, path):
@@ -51,7 +51,7 @@ def device_length(files, path):
                 print("Cannot convert date")
 
 
-# In[18]:
+# In[5]:
 
 
 def gaps_numb(files, path):
@@ -75,16 +75,36 @@ def gaps_numb(files, path):
     return count
 
 
-# In[19]:
+# In[17]:
 
 
 def mean_features(path):
     df = pd.read_csv(path)
     if not df.empty:
-        return df['Value'].mean()
+        avgs = []
+        dates = df['Start_Date']
+        values = df['Value']
+        cur_date = dates[0]
+        cur_sum = 0
+        count_cur_date = 0
+        for i in range(1, len(df)):
+            cur_day = dates[i]
+            if cur_day == cur_date and values[i].isnumeric():
+                cur_sum += values[i]
+                count_cur_date += 1
+            else:
+                avgs.append(cur_sum / count_cur_date)
+                cur_date = cur_day
+        return np.mean(avgs)
 
 
-# In[7]:
+# In[16]:
+
+
+print(mean_features("/labs/mpsnyder/long-covid-study-data/final_data/gxezl11642522163448711/hr.csv"))
+
+
+# In[9]:
 
 
 dir_list = os.listdir(rootdir)
@@ -106,17 +126,6 @@ for dir in dir_list:
         if "st.csv" in csv_files:
             mean_st.append(mean_features(path + "/" + "st.csv"))
     print(dir)
-
-
-# In[8]:
-
-
-for dir in dir_list:
-    path = rootdir + "/" + dir
-    csv_files = os.listdir(path)
-    print(dir, csv_files)
-    if len(csv_files) != 0:
-        gaps_count.append(gaps_numb(csv_files, path))
 
 
 # In[ ]:
