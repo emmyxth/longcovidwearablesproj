@@ -8,8 +8,8 @@
 #SBATCH --account=default
 #SBATCH --time=1:00:00
 #SBATCH --array=0-9
-#SBATCH --output=./output/patient_RHR_process_%A_%a.out
-#SBATCH --error=./output/patient_RHR_process_%A_%a.err
+#SBATCH --output=/labs/mpsnyder/long-covid-study-data/output/patient_RHR_process_%A_%a.out
+#SBATCH --error=/labs/mpsnyder/long-covid-study-data/output/patient_RHR_process_%A_%a.err
 
 if [ $# -ne 2 ]; then
     echo "Usage: $0 <small|large> <linear|majority>"
