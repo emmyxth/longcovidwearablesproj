@@ -69,7 +69,6 @@ def extract_rhr_fitbit(df_hr: pd.DataFrame, df_st: pd.DataFrame):
         hr_datetime, st_datetime = helper.get_datetime(df_hr, hr_i), helper.get_datetime(df_st, st_i)
         
         while (hr_datetime < st_datetime):
-            print(hr_datetime, st_datetime)
             # it is RHR 
             columns = helper.fill_columns(hr_i, columns, df_hr)
             hr_i += 1
@@ -80,7 +79,6 @@ def extract_rhr_fitbit(df_hr: pd.DataFrame, df_st: pd.DataFrame):
         
         # hr_datetime must be greater than st_datetime, but not nec abt hr_datetime[hr_i] - 10 min 
         while (hr_datetime >= st_datetime):
-            print(hr_datetime, st_datetime)
             # in between 
             if (hr_datetime - timedelta(minutes=10) <= st_datetime) and (st_datetime <= hr_datetime):
                 # not rhr 
