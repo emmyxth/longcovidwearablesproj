@@ -17,7 +17,7 @@ from csv import DictWriter
 
 
 rootdir = "/labs/mpsnyder/long-covid-study-data/final_data"
-idmapping = pd.read_csv("/home/emmyst/idmapping.csv", dtype='str')
+idmapping = pd.read_csv("/labs/mpsnyder/long-covid-study-data/additional_src_files/idmapping.csv", dtype='str')
 date_format = "%Y-%m-%d"
 ID_bottom = []
 
@@ -93,7 +93,7 @@ def mean_features(path):
         count_cur_date = 0
         for i in range(1, len(df)):
             cur_day = dates[i]
-            if cur_day == cur_date and values[i].isnumeric():
+            if cur_day == cur_date and values[i].dtype != str:
                 cur_sum += values[i]
                 count_cur_date += 1
             else:
