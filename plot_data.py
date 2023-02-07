@@ -1,12 +1,12 @@
 from matplotlib import pyplot as plt 
 import numpy as np
-from data import get_train
 import pandas as pd
+import docopt
+import os
+import sys
 
-#data = tuple of numpy arrays (X_train, T_train) where X_train is (samples, features) and T_train is (samples, 1)
-#RHR = bool of whether to switch to RHR mode
-def plot_data(data, RHR):
-    X_train, T_train = data
+def plot_data(data, feature, RHR):
+    #X_train, T_train = data
     
     if RHR:
         plt.title("Average night RHR (11pm to 6am) from 15 days before COVID test to 90 days after COVID test date")
@@ -24,12 +24,36 @@ def plot_data(data, RHR):
             plt.show()
     
     else:
-        x_label = X_train.dtype.names[1] #need to change to fit
-        y_label = X_train.dtype.names[2] #need to change to fit
-        plt.title(f"{x_label}")
-        plt.xlabel("x_label")
-        plt.ylabel("y_label")
-        plt.scatter(X_train[1], X_train[2])
+        col = data.loc[:, feature]
+        col = count_frequencies(col.sort_values(), feature)
+        plt.title(f"{feature}")
+        plt.xlabel(feature)
+        plt.ylabel("Participant frequency")
+        x = col.loc[:,feature]
+        y = col.loc[:,"counts"]
+        print(x,y)
+        plt.scatter(x, y)
         plt.show()
-        
-    plt.savefig('LongCovidProject/figures') #need to change path
+        #plt.savefig('/labs/mpsnyder/long-covid-study-data/figures/' + feature + '.png')
+
+def count_frequencies(data, feature):
+    print(data.value_counts())
+    data = data.value_counts().rename_axis(feature).reset_index(name='counts')
+    print(data)
+    return data
+    
+def read_data(path):
+    arr = pd.read_csv(path, index_col=None)
+    print(arr)
+    return arr
+
+def main():
+    feature, src_path = sys.argv[1], sys.argv[2]
+    data = read_data(src_path)
+    if feature == "rhr":
+        plot_data(data, feature, True)
+    else:
+        plot_data(data, feature, False)
+
+if __name__ == '__main__':
+    main()
