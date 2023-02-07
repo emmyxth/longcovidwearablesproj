@@ -9,6 +9,8 @@ import numpy as np
 import os
 from datetime import *
 import math
+import sys
+from csv import DictWriter
 
 
 # In[2]:
@@ -46,7 +48,9 @@ def device_length(files, path):
             try:
                 formatted_start = datetime.strptime(start_date, date_format)
                 formatted_end = datetime.strptime(end_date, date_format)
-                return abs(formatted_start - formatted_end)
+                date_diff = str(formatted_end - formatted_start)
+                day = (date_diff.split())[0]
+                return int(day)
             except:
                 print("Cannot convert date")
 
@@ -106,38 +110,41 @@ print(mean_features("/labs/mpsnyder/long-covid-study-data/final_data/gxezl116425
 
 # In[9]:
 
-
-dir_list = os.listdir(rootdir)
-data_count = []
-gaps_count = []
-device_time = []
-mean_hr = []
-mean_st = []
-for dir in dir_list:
-    path = rootdir + "/" + dir
+def add_features(participant_id):
+    path = rootdir + "/" + participant_id
     csv_files = os.listdir(path)
-    
+    headers = ["id", "data_count", "num_gaps", "device_time", "mean_hr", "mean_st"]
+    values = {}
     if len(csv_files) != 0:
-        data_count.append(count_len_csv(csv_files, path))
-        gaps_count.append(gaps_numb(csv_files, path))
-        device_time.append(gaps_numb(csv_files, path))
+        values["id"] = participant_id
+        values["data_count"] = count_len_csv(csv_files, path)
+        values["num_gaps"] = gaps_numb(csv_files, path)
+        values["device_time"] = device_length(csv_files, path)
         if "hr.csv" in csv_files:
-            mean_hr.append(mean_features(path + "/" + "hr.csv"))
+            values["mean_hr"] = mean_features(path + "/" + "hr.csv")
+        if "hr.csv" not in csv_files:
+            values["mean_hr"] = -1.
         if "st.csv" in csv_files:
-            mean_st.append(mean_features(path + "/" + "st.csv"))
-    print(dir)
+            values["mean_st"] = mean_features(path + "/" + "st.csv")
+        if "st.csv" not in csv_files:
+            values["mean_st"] = -1.
+
+    # In[ ]:
 
 
-# In[ ]:
+    #Saving to csv file
+    with open('/labs/mpsnyder/long-covid-study-data/processed_features/processed_features_b1.csv', 'a') as f_object:
+        dictwriter_object = DictWriter(f_object, fieldnames=headers)
+        dictwriter_object.writerow(values)
+        f_object.close()
 
 
-#Saving to csv file
-data = {
-    'gaps_count': gaps_count,
-    'device_time': device_time,
-    'mean_hr': mean_hr,
-    'mean_st': mean_st
-}
-data = pd.DataFrame(data)
-data.to_csv("/labs/mpsnyder/long-covid-study-data/processed_features/plotting")
+if __name__ == "__main__":
+    #### EDIT HERE, DEPENDING ON HOW BASH SCRIPT USES THIS .py FILE ####
+    participant_id = os.path.basename(sys.argv[1])
+    print("participant_id: ", participant_id)
 
+    ### EDIT THE ABOVE IF DIFFERNT FORMAT ### 
+
+    add_features(participant_id)
+    print("Done extracting features for participant: ", participant_id)
