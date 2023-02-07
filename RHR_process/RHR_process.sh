@@ -8,8 +8,8 @@
 #SBATCH --account=default
 #SBATCH --time=1:00:00
 #SBATCH --array=0-100
-#SBATCH --output=/labs/mpsnyder/long-covid-study-data/output/RHR_process_%A_%a.out
-#SBATCH --error=/labs/mpsnyder/long-covid-study-data/output/RHR_process_%A_%a.err
+#SBATCH --output=/labs/mpsnyder/long-covid-study-data/output/RHR_process/%A_%a.out
+#SBATCH --error=/labs/mpsnyder/long-covid-study-data/output/RHR_process/%A_%a.err
 
 module load miniconda/3
 FILES=(/labs/mpsnyder/long-covid-study-data/final_data/*)
