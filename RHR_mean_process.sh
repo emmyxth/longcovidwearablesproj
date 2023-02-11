@@ -12,5 +12,5 @@
 #SBATCH --error=/labs/mpsnyder/LongCovidEkanath/output/RHR_mean_process/%A_%a.err
 
 module load miniconda/3
-FILES=(/labs/mpsnyder/long-covid-study-data/final_data/*)
+FILES=(/labs/mpsnyder/LongCovidEkanath/COVID_Positives/COVID_Positives_RHR_data/*)
 python3 RHR_phase_mean.py ${FILES[$SLURM_ARRAY_TASK_ID]}
