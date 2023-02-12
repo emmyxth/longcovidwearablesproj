@@ -7,7 +7,7 @@
 #SBATCH --partition=interactive
 #SBATCH --account=default
 #SBATCH --time=2:00:00
-#SBATCH --array=2500-5572
+#SBATCH --array=0-5572
 #SBATCH --output=/labs/mpsnyder/long-covid-study-data/output/patient_feature_extraction/%A_%a.out
 #SBATCH --error=/labs/mpsnyder/long-covid-study-data/output/patient_feature_extraction/%A_%a.err
 
