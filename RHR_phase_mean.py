@@ -101,7 +101,7 @@ def calc_avg_per_phase(df):
     return df
 
 def rhr_average_by_phases(participant_id: str):
-    start_path = "/labs/mpsnyder/long-covid-study-data/final_data" 
+    start_path = "/labs/mpsnyder/LongCovidEkanath/COVID_Positives/COVID_Positives_RHR_data" 
     os.chdir(start_path)
     # find hr and st csv file and check if it exists
     csv_file_path = glob.glob(start_path + "/" + participant_id + "/rhr.csv") # rhr files 
