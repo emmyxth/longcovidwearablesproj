@@ -93,7 +93,7 @@ def mean_features(path):
         count_cur_date = 0
         for i in range(1, len(df)):
             cur_day = dates[i]
-            if cur_day == cur_date and values[i].dtype != str:
+            if cur_day == cur_date and type(values[i]) != str:
                 cur_sum += values[i]
                 count_cur_date += 1
             else:

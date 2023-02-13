@@ -5,6 +5,8 @@ import docopt
 import os
 import sys
 
+rootpath = "/labs/mpsnyder/LongCovidEkanath/COVID_Positives/COVID_Positives_Figures"
+#Main function pulling together plotting
 def plot_data(data, feature, RHR):
     #X_train, T_train = data
     
@@ -24,36 +26,70 @@ def plot_data(data, feature, RHR):
             plt.show()
     
     else:
-        col = data.loc[:, feature]
-        col = count_frequencies(col.sort_values(), feature)
-        plt.title(f"{feature}")
-        plt.xlabel(feature)
-        plt.ylabel("Participant frequency")
-        x = col.loc[:,feature]
-        y = col.loc[:,"counts"]
-        print(x,y)
-        plt.scatter(x, y)
+        bins = find_ranges(data, feature) #finding intervals for bar chart
+        data["bins"] = pd.cut(data[feature], bins=bins) #binning original data in intervals
+        bin_counts = data['bins'].value_counts(sort=False) #count number of values within bin
+        title, xlabel, ylabel = labels(feature) #etracting features
+        fig, axs = plt.subplots(figsize=(12, 4)) 
+        plot = bin_counts.plot.bar(ax=axs) #plotting data 
+        axs.set_xlabel(xlabel)
+        axs.set_ylabel(ylabel)
+        axs.set_title(title)
+        file_path = os.path.join(rootpath, feature + '.png')
+        print(file_path)
+        #plot = bin_counts.plot.bar(title=title, xlabel=xlabel, ylabel=ylabel) #plotting data
+        axs.margins(0.2, 0.2)
+        #fig.savefig(fname=file_path, format='png', pad_inches=1) #X axis cut off
         plt.show()
-        #plt.savefig('/labs/mpsnyder/long-covid-study-data/figures/' + feature + '.png')
 
-def count_frequencies(data, feature):
-    print(data.value_counts())
-    data = data.value_counts().rename_axis(feature).reset_index(name='counts')
-    print(data)
-    return data
+#returns title, x, y labels based on feature 
+def labels(feature):
+    title, xlabel, ylabel = None, None, None
+    if feature == "mean_st":
+        title = "Distribution of mean step count among COVID-19 Positive participants"
+        xlabel = "Mean step count"
+        ylabel = "Participant frequency"
+    elif feature == "data_count":
+        title = "Distribution of the amount of data per COVID-19 Positive participant"
+        xlabel = "Points of data"
+        ylabel = "Participant frequency"
+    elif feature == "num_gaps":
+        title = "Distribution of the number of gaps (>3 days) of data per COVID-19 Positive participant"
+        xlabel = "Number of gaps (>3 days)"
+        ylabel = "Participant frequency"
+    elif feature == "device_time":
+        title = "Distribution of duration of data per COVID-19 Positive participant"
+        xlabel = "Number of days of data"
+        ylabel = "Participant frequency"
+    elif feature == "mean_hr":
+        title = "Distribution of mean heart rate per COVID-19 Positive participant"
+        xlabel = "Mean heart rate"
+        ylabel = "Participant frequency"
+    elif feature == "adherence":
+        title = "Distribution of adherence per COVID-19 Positive participant"
+        xlabel = "Days of active data collection / Total number of recorded days"
+        ylabel = "Participant frequency"
+    elif feature == "RHR":
+        title = "Distribution of average night RHR (11pm to 6am) from 15 days before COVID test to 90 days after COVID test date per COVID-19 Positive participant"
+        xlabel = "Days"
+        ylabel = "RHR"
+    return (title, xlabel, ylabel)
+
+#Returns list of 10 evenly spaced intervals from given data values
+def find_ranges(data, col):
+    data[col] = data[col].replace([-1], np.NaN)
+    col_data = data[col]
+    max_v = col_data.max()
+    min_v = col_data.min()
+    rounded_intervals = np.ceil((max_v - min_v) / 10)
+    return [i * rounded_intervals for i in range(11)]
     
+#Read path to CSV
 def read_data(path):
     arr = pd.read_csv(path, index_col=None)
-    print(arr)
     return arr
 
-def main():
-    feature, src_path = sys.argv[1], sys.argv[2]
-    data = read_data(src_path)
-    if feature == "rhr":
-        plot_data(data, feature, True)
-    else:
-        plot_data(data, feature, False)
-
-if __name__ == '__main__':
-    main()
+#Sample use of plotting features
+src_path = "/labs/mpsnyder/long-covid-study-data/processed_features/processed_features_b1 (1).csv"
+data = read_data(src_path)
+plot_data(data, "device_time", False)
