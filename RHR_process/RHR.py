@@ -16,7 +16,10 @@ Given a participant_id, the function finds the hr and st files of the participan
 (2) apple watch extract function, and stores a csv file in the participant_id's folder. 
 """
 def extract_rhr(participant_id: str) -> None:
-    start_path = "/labs/mpsnyder/long-covid-study-data/final_data" 
+    start_path = "/labs/mpsnyder/LongCovidEkanath/COVID_Positives/COVID_Positives_Final_data"  # to get data
+    end_folder_path = "/labs/mpsnyder/LongCovidEkanath/COVID_Positives/COVID_Positives_RHR_data/" + participant_id  # to store data
+    os.mkdir(end_folder_path)  # make directory for this participant id 
+
     os.chdir(start_path)
     # find hr and st csv file and check if it exists
     csv_file_path_hr = glob.glob(start_path + "/" + participant_id + "/*hr.csv") # hr files 
@@ -28,12 +31,11 @@ def extract_rhr(participant_id: str) -> None:
 
     if df_hr.Device[0] == "Fitbit":
         df = extract_rhr_fitbit(df_hr, df_st)
-        df.to_csv(start_path + "/" + participant_id + "/rhr.csv")
+        df.to_csv(end_folder_path + "/rhr.csv")
 
     elif df_hr.Device[0] == "HK Apple Watch":
         df = extract_rhr_applewatch(df_hr, df_st)
-        df.to_csv(start_path + "/" + participant_id + "/rhr.csv")
-
+        df.to_csv(end_folder_path + "/rhr.csv")
 """
 params: 
 df_hr -> hr dataframe 
@@ -64,7 +66,7 @@ def extract_rhr_fitbit(df_hr: pd.DataFrame, df_st: pd.DataFrame):
     # get converted datetime obj for both hr and st data 
     
     hr_i, st_i = 0, 0
-    while hr_i < len(df_hr.Start_Time) and st_i < len(df_st.Start_Time):
+    while hr_i < len(df_hr.Start_Time) - 1 and st_i < len(df_st.Start_Time) - 1:
         # get updated datetime
         hr_datetime, st_datetime = helper.get_datetime(df_hr, hr_i), helper.get_datetime(df_st, st_i)
         
@@ -72,10 +74,10 @@ def extract_rhr_fitbit(df_hr: pd.DataFrame, df_st: pd.DataFrame):
             # it is RHR 
             columns = helper.fill_columns(hr_i, columns, df_hr)
             hr_i += 1
-            if hr_i >= len(df_hr.Start_Time):  break
+            if hr_i >= len(df_hr.Start_Time) - 1:  break
             hr_datetime = helper.get_datetime(df_hr, hr_i)
         
-        if hr_i >= len(df_hr.Start_Time) or st_i >= len(df_st.Start_Time):  break  
+        if hr_i >= len(df_hr.Start_Time) - 1 or st_i >= len(df_st.Start_Time) - 1:  break  
         
         # hr_datetime must be greater than st_datetime, but not nec abt hr_datetime[hr_i] - 10 min 
         while (hr_datetime >= st_datetime):
@@ -83,18 +85,18 @@ def extract_rhr_fitbit(df_hr: pd.DataFrame, df_st: pd.DataFrame):
             if (hr_datetime - timedelta(minutes=10) <= st_datetime) and (st_datetime <= hr_datetime):
                 # not rhr 
                 hr_i += 1
-                if hr_i >= len(df_hr.Start_Time):  break
+                if hr_i >= len(df_hr.Start_Time) - 1:  break
                 hr_datetime = helper.get_datetime(df_hr, hr_i)
             else:
                 st_i += 1
-                if st_i >= len(df_st.Start_Time):  break
+                if st_i >= len(df_st.Start_Time) - 1:  break
                 st_datetime = helper.get_datetime(df_st, st_i)
               
-    while hr_i < len(df_hr.Start_Time):
+    while hr_i < len(df_hr.Start_Time) - 1:
         # yes rhr
         columns = helper.fill_columns(hr_i, columns, df_hr) 
         hr_i += 1
-        if hr_i >= len(df_hr.Start_Time):  break
+        if hr_i >= len(df_hr.Start_Time) - 1:  break
         hr_datetime = helper.get_datetime(df_hr, hr_i)
             
     df = helper.create_df(columns)
@@ -110,7 +112,7 @@ def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame):
     columns = [device_col, start_date_col, start_time_col, value_col]
     
     hr_i, st_i = 0, 0
-    while hr_i < len(df_hr.Start_Time) and st_i < len(df_st.Start_Time):
+    while hr_i < len(df_hr.Start_Time) - 1 and st_i < len(df_st.Start_Time) - 1:
         
         hr_datetime = helper.get_datetime_applewatch(df_hr, hr_i, "Start")
         st_start_time, st_end_time = helper.get_datetime_applewatch(df_st, st_i, "Start"), helper.get_datetime_applewatch(df_st, st_i, "End")
@@ -119,11 +121,10 @@ def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame):
         while (hr_datetime < st_start_time):
             columns = helper.fill_columns(hr_i, columns, df_hr)
             hr_i += 1
-            if hr_i >= len(df_hr.Start_Date):  break 
+            if hr_i >= len(df_hr.Start_Date) - 1:  break 
             hr_datetime = helper.get_datetime_applewatch(df_hr, hr_i, "Start")
-#             print("success")
             
-        if hr_i >= len(df_hr.Start_Time) or st_i >= len(df_st.Start_Time):  break 
+        if hr_i >= len(df_hr.Start_Time) - 1 or st_i >= len(df_st.Start_Time) - 1:  break 
             
         # now, hr_datetime >= st_start_time must hold true 
         # loop while hr_datetime > st_datetime_start
@@ -133,19 +134,19 @@ def extract_rhr_applewatch(df_hr: pd.DataFrame, df_st: pd.DataFrame):
             if ((st_start_time <= hr_datetime and hr_datetime <= st_end_time) or 
                hr_datetime - timedelta(minutes=10) <= st_end_time):
                 hr_i += 1
-                if hr_i >= len(df_hr.Start_Date):  break
+                if hr_i >= len(df_hr.Start_Date) - 1:  break
                 hr_datetime = helper.get_datetime_applewatch(df_hr, hr_i, "Start")
             else:
                 st_i += 1
-                if st_i >= len(df_st.Start_Date):  break 
+                if st_i >= len(df_st.Start_Date) - 1:  break 
                 st_start_time, st_end_time = helper.get_datetime_applewatch(df_st, st_i, "Start"), helper.get_datetime_applewatch(df_st, st_i, "End")
         
-        if hr_i >= len(df_hr.Start_Time) or st_i >= len(df_st.Start_Time):  break 
+        if hr_i >= len(df_hr.Start_Time) - 1 or st_i >= len(df_st.Start_Time) - 1:  break 
 
-    while hr_i < len(df_hr.Start_Time):
+    while hr_i < len(df_hr.Start_Time) - 1:
         columns = helper.fill_columns(hr_i, columns, df_hr)
         hr_i += 1
-        if hr_i >= len(df_hr.Start_Date):  break
+        if hr_i >= len(df_hr.Start_Date) - 1:  break
         hr_datetime = helper.get_datetime_applewatch(df_hr, hr_i, "Start")
     
     df = helper.create_df(columns)

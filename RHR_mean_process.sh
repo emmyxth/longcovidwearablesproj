@@ -7,10 +7,10 @@
 #SBATCH --partition=interactive
 #SBATCH --account=default
 #SBATCH --time=1:00:00
-#SBATCH --array=0-5572
-#SBATCH --output=/labs/mpsnyder/long-covid-study-data/output_rhr_mean/RHR_mean_process_%A_%a.out
-#SBATCH --error=/labs/mpsnyder/long-covid-study-data/output_rhr_mean/RHR_mean_process_%A_%a.err
+#SBATCH --array=0-992
+#SBATCH --output=/labs/mpsnyder/LongCovidEkanath/output/RHR_mean_process/%A_%a.out
+#SBATCH --error=/labs/mpsnyder/LongCovidEkanath/output/RHR_mean_process/%A_%a.err
 
 module load miniconda/3
-FILES=(/labs/mpsnyder/long-covid-study-data/final_data/*)
+FILES=(/labs/mpsnyder/LongCovidEkanath/COVID_Positives/COVID_Positives_RHR_data/*)
 python3 RHR_phase_mean.py ${FILES[$SLURM_ARRAY_TASK_ID]}

@@ -7,7 +7,7 @@
 import pandas as pd
 import numpy as np
 import os
-from datetime import *
+from datetime import datetime, timedelta
 import math
 import sys
 from csv import DictWriter
@@ -46,8 +46,8 @@ def device_length(files, path):
             start_date = date[0]
             end_date = date[len(df) -1]
             try:
-                formatted_start = datetime.strptime(start_date, date_format)
-                formatted_end = datetime.strptime(end_date, date_format)
+                formatted_start = datetime.strptime(str(start_date), date_format)
+                formatted_end = datetime.strptime(str(end_date), date_format)
                 date_diff = str(formatted_end - formatted_start)
                 day = (date_diff.split())[0]
                 return int(day)
@@ -65,11 +65,11 @@ def gaps_numb(files, path):
         df = pd.read_csv(updated)
         date_col = df.loc[:, 'Start_Date']
         if not date_col.empty:
-            prev = datetime.strptime(date_col[0], date_format)
+            prev = datetime.strptime(str(date_col[0]), date_format)
             for i in range(1, len(df)):
                 cur_value = date_col[i]
                 try:
-                    cur_date = datetime.strptime(date_col[i], date_format)
+                    cur_date = datetime.strptime(str(date_col[i]), date_format)
                     if cur_date - prev > timedelta(days = 3):
                         count += 1
                     prev = cur_date
