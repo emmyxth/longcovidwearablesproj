@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 import sys
 
-COVID_STUDY_PATH = "/labs/mpsnyder/long-covid-study-data/COVID_GCB/covid-study/"
-LONG_COVID_STUDY_PATH = "/labs/mpsnyder/long-covid-study-data/longcovid2022-study/longcovid2022-processed/"
-SCG_FOLDER_PATH = "/labs/mpsnyder/long-covid-study-data/LongCOVIDSCG/"
-OUTPUT_FOLDER_PATH = "/labs/mpsnyder/long-covid-study-data/final_data_cleaned/"
+COVID_STUDY_PATH = "/labs/mpsnyder/long-covid-study-data/raw_data/COVID_GCB/covid-study/"
+LONG_COVID_STUDY_PATH = "/labs/mpsnyder/long-covid-study-data/raw_data/longcovid2022-study/longcovid2022-processed/"
+SCG_FOLDER_PATH = "/labs/mpsnyder/long-covid-study-data/raw_data/LongCOVIDSCG/"
+OUTPUT_FOLDER_PATH = "/labs/mpsnyder/LongCovidEkanath/final_data_recleaned/"
 COLUMN_NAMES = ['Device','Start_Date','End_Date','Start_Time','End_Time','Value','Tag','Type']
 
 def get_id_mapping():
@@ -16,7 +16,7 @@ def get_id_mapping():
     Returns:
         id_mapping (pandas dataframe): the id mapping file
     '''
-    id_mapping = pd.read_csv("/labs/mpsnyder/long-covid-study-data/additional_src_files/idmapping.csv", dtype = "str")
+    id_mapping = pd.read_csv("/labs/mpsnyder/LongCovidEkanath/ID_mapping.csv", dtype = "str")
     return id_mapping
 
 def get_covid_study_data(id: str, data_type: str) -> pd.DataFrame:
@@ -33,9 +33,9 @@ def get_covid_study_data(id: str, data_type: str) -> pd.DataFrame:
 
     # map the different types of data to the different paths
     data_formats = {
-        "hr": "/hr/hr.csv",
-        "st": "/st/st.csv",
-        "sl": "/sl/sl.csv"
+        "hr": "hr/hr.csv",
+        "st": "st/st.csv",
+        "sl": "sl/sl.csv"
     }
     
     file_name = data_formats[data_type]
@@ -43,7 +43,7 @@ def get_covid_study_data(id: str, data_type: str) -> pd.DataFrame:
     # set up the paths to the data
     file_path = os.path.join(COVID_STUDY_PATH, id, file_name)
     
-    return get_csv_data(file_path)
+    return get_csv_data(file_path, data_type)
 
 def get_long_covid_study_data(id: str, data_type: str) -> pd.DataFrame:
     '''
@@ -58,9 +58,9 @@ def get_long_covid_study_data(id: str, data_type: str) -> pd.DataFrame:
     '''
     # map the different types of data to the different paths
     data_formats = {
-        "hr": "/hr.csv",
-        "st": "/st.csv",
-        "sl": "/sl.csv"
+        "hr": "hr.csv",
+        "st": "st.csv",
+        "sl": "sl.csv"
     }
 
     file_name = data_formats[data_type]
@@ -68,28 +68,34 @@ def get_long_covid_study_data(id: str, data_type: str) -> pd.DataFrame:
     # set up the paths to the data
     file_path = os.path.join(LONG_COVID_STUDY_PATH, id, file_name)
 
-    return get_csv_data(file_path)
+    return get_csv_data(file_path, data_type)
 
-def get_csv_data(file_path: str) -> pd.DataFrame:
+def get_csv_data(file_path: str, data_type: str) -> pd.DataFrame:
     # if the folder doesn't exist, return an empty dataframe
     if not os.path.isfile(file_path):
+        print(f"File doesn't exist: ${file_path}")
         return pd.DataFrame()
 
-    # if the file is empty, return an empty dataframe
-    if os.stat(file_path).st_size == 0:
+    # # if the file is empty, return an empty dataframe
+    if os.stat(file_path).st_size <= 10:
+        print(f"File is empty: ${file_path}")
         return pd.DataFrame()
     
     # try to read in the data
     # try:
-    df_result = pd.read_csv(file_path, dtype = "string")
+    df_result = pd.read_csv(file_path, dtype = "str")
     # except Exception as e:
     #     print(e)
     #     # return an empty dataframe if there is an error
     #     return pd.DataFrame()
-    
-    return clean_df(df_result)
 
-def clean_df(df_result: pd.DataFrame) -> pd.DataFrame:
+    if df_result.empty:
+        print(f"File is empty: ${file_path}")
+        return pd.DataFrame()
+    
+    return clean_df(df_result, data_type)
+
+def clean_df(df_result: pd.DataFrame, data_type: str) -> pd.DataFrame:
     '''
     This function cleans the data from the csv files and returns it as a pandas dataframe
     1. make sure all columns are present
@@ -103,6 +109,9 @@ def clean_df(df_result: pd.DataFrame) -> pd.DataFrame:
         df_cleaned (pandas dataframe): the cleaned data
 
     '''
+    print("==================== raw data =========================")
+    print(df_result)
+    print("=======================================================")
     df_cleaned = pd.DataFrame()
     # make sure all columns are present
     for col in COLUMN_NAMES:
@@ -113,8 +122,9 @@ def clean_df(df_result: pd.DataFrame) -> pd.DataFrame:
             df_cleaned[col] = df_result[col]
     
     # drop all the rows that value is not a integer
-    df_cleaned = df_cleaned[df_cleaned["Value"].str.isnumeric()]
-    df_cleaned["Value"] = df_cleaned["Value"].astype(int)
+    if data_type != "sl":
+        df_cleaned = df_cleaned[df_cleaned["Value"].str.isnumeric().fillna(False)]
+        df_cleaned["Value"] = df_cleaned["Value"].astype(int)
 
     # rearrage the columns so that it is the same order as COLUMN_NAMES
     df_cleaned = df_cleaned[COLUMN_NAMES]
@@ -124,6 +134,10 @@ def clean_df(df_result: pd.DataFrame) -> pd.DataFrame:
         df_cleaned["Start_Time"] = pd.to_datetime(df_cleaned["Start_Time"])
 
     assert(df_cleaned.columns.tolist() == COLUMN_NAMES) # make sure all the columns are present
+
+    print("================== cleaned data =======================")
+    print(df_cleaned)
+    print("=======================================================")
 
     return df_cleaned
 
@@ -140,8 +154,8 @@ def get_scg_data(id: str, data_type: str) -> pd.DataFrame:
     '''
     # map the different types of data to the different paths
     data_formats = {
-        "hr": ["/Orig_Fitbit_HR.csv", "/Orig_NonFitbit_HR.csv"],
-        "st": ["/Orig_Fitbit_ST.csv", "/Orig_NonFitbit_ST.csv"],
+        "hr": ["Orig_Fitbit_HR.csv", "Orig_NonFitbit_HR.csv"],
+        "st": ["Orig_Fitbit_ST.csv", "Orig_NonFitbit_ST.csv"],
     }
 
     # if the data type is sl, return an empty dataframe
@@ -158,27 +172,39 @@ def get_scg_data(id: str, data_type: str) -> pd.DataFrame:
 
     # if there are no file paths, return an empty dataframe
     if len(file_paths) == 0:
+        print("File doesn't exist: " + id + " " + data_type)
         return pd.DataFrame()
     
     assert(len(file_paths) == 1) # make sure there is only one file path
 
     file_path = file_paths[0]
 
-    # if the file is empty, return an empty dataframe
-    if os.stat(file_path).st_size == 0:
+    # # if the file is empty or some what corrupted, return an empty dataframe
+    if os.stat(file_path).st_size <= 10:
+        print("File is empty: " + file_path)
         return pd.DataFrame()
 
     # try to read in the data
-    df_result = pd.read_csv(file_paths[0], dtype = "string")
+    df_result = pd.read_csv(file_path, dtype = "str")
 
-    # add device column
-    if os.path.basename(file_path) == "/Orig_Fitbit_HR.csv" or os.path.basename(file_path) == "/Orig_Fitbit_ST.csv":
+    if df_result.empty:
+        print("File is empty: " + file_path)
+        return pd.DataFrame()
+
+    # add device column and split the datetime column into date and time
+    if os.path.basename(file_path) == "Orig_Fitbit_HR.csv" or os.path.basename(file_path) == "Orig_Fitbit_ST.csv":
         df_result["device"] = "Fitbit"
-    
-    df_result[['Start_Date','Start_Time']] = df_result["datetime"].str.split(n=1, expand=True)
+        df_result[['Start_Date','Start_Time']] = df_result["datetime"].str.split(n=1, expand=True)
+    else:
+        if data_type == "hr":
+            df_result[['Start_Date','Start_Time']] = df_result["datetime"].str.split(n=1, expand=True)
+        else:
+            df_result[['Start_Date','Start_Time']] = df_result["start_datetime"].str.split(n=1, expand=True)
+            df_result[['End_Date','End_Time']] = df_result["end_datetime"].str.split(n=1, expand=True)
+
     df_result = df_result.rename(columns={"device": "Device", "heartrate": "Value", "steps": "Value"})
     
-    return clean_df(df_result)
+    return clean_df(df_result, data_type)
 
 def data_joining(id: str):
     '''
@@ -190,10 +216,7 @@ def data_joining(id: str):
     Returns:
         None
     '''
-
-    # # read in the id mapping file
-    # id_mapping = get_id_mapping()
-    # id = id_mapping["Long COVID BUcket ID"].iloc[index]
+    # the different types of data to join
     data_formats = ["hr", "st", "sl"]
 
     # check if the output folder exists
@@ -201,6 +224,9 @@ def data_joining(id: str):
         os.mkdir(OUTPUT_FOLDER_PATH)
 
     for data_format in data_formats:
+        print("=======================================================")
+        print("Starting " + id + " " + data_format)
+        print("=======================================================")
         # get the data from the csv files
         scg_data = get_scg_data(id, data_format)
         covid_study_data = get_covid_study_data(id, data_format)
@@ -213,7 +239,7 @@ def data_joining(id: str):
             continue
         
         # sort the data by date
-        data = data.sort_values(by=["Start_Date", "Start_Time"], ascending=[True, True], ignore_index = True, na_position = "first")
+        data = data.sort_values(by=["Start_Date", "Start_Time"], ascending=[True, True], na_position = "first")
 
         output_folder_path = os.path.join(OUTPUT_FOLDER_PATH, id)
 
@@ -222,6 +248,10 @@ def data_joining(id: str):
             os.mkdir(output_folder_path)
         
         assert(data.columns.tolist() == COLUMN_NAMES) # make sure all the columns are present
+
+        print("==================== joined sorted data =========================")
+        print(data)
+        print("=================================================================")
 
         # save the data as a csv file
         data.to_csv(os.path.join(output_folder_path, data_format + ".csv"), index = False)
