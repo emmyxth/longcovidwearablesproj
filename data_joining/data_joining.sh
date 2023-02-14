@@ -7,7 +7,7 @@
 #SBATCH --partition=interactive
 #SBATCH --account=default
 #SBATCH --time=2:00:00
-#SBATCH --array=0-1000
+#SBATCH --array=0-5572
 #SBATCH --output=/labs/mpsnyder/LongCovidEkanath/output/data_joining/print_output/%A_%a.out
 #SBATCH --error=/labs/mpsnyder/LongCovidEkanath/output/data_joining/error/%A_%a.err
 

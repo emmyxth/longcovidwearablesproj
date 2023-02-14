@@ -81,6 +81,11 @@ def get_csv_data(file_path: str, data_type: str) -> pd.DataFrame:
         print(f"File is empty: ${file_path}")
         return pd.DataFrame()
     
+    with open(file_path, 'r') as file:
+        if file.read().startswith("BigQuery error"):
+            print("File has error: " + file_path)
+            return pd.DataFrame()
+    
     # try to read in the data
     # try:
     df_result = pd.read_csv(file_path, dtype = "str")
@@ -88,6 +93,10 @@ def get_csv_data(file_path: str, data_type: str) -> pd.DataFrame:
     #     print(e)
     #     # return an empty dataframe if there is an error
     #     return pd.DataFrame()
+
+    print("==================== raw data =========================")
+    print(df_result)
+    print("=======================================================\n")
 
     if df_result.empty:
         print(f"File is empty: ${file_path}")
@@ -109,9 +118,6 @@ def clean_df(df_result: pd.DataFrame, data_type: str) -> pd.DataFrame:
         df_cleaned (pandas dataframe): the cleaned data
 
     '''
-    print("==================== raw data =========================")
-    print(df_result)
-    print("=======================================================")
     df_cleaned = pd.DataFrame()
     # make sure all columns are present
     for col in COLUMN_NAMES:
@@ -123,8 +129,8 @@ def clean_df(df_result: pd.DataFrame, data_type: str) -> pd.DataFrame:
     
     # drop all the rows that value is not a integer
     if data_type != "sl":
-        df_cleaned = df_cleaned[df_cleaned["Value"].str.isnumeric().fillna(False)]
-        df_cleaned["Value"] = df_cleaned["Value"].astype(int)
+        df_cleaned = df_cleaned[df_cleaned["Value"].str.match(r"^\d+\.?\d*$").fillna(False)]
+        df_cleaned["Value"] = df_cleaned["Value"].astype(float)
 
     # rearrage the columns so that it is the same order as COLUMN_NAMES
     df_cleaned = df_cleaned[COLUMN_NAMES]
@@ -137,7 +143,7 @@ def clean_df(df_result: pd.DataFrame, data_type: str) -> pd.DataFrame:
 
     print("================== cleaned data =======================")
     print(df_cleaned)
-    print("=======================================================")
+    print("=======================================================\n")
 
     return df_cleaned
 
@@ -184,8 +190,17 @@ def get_scg_data(id: str, data_type: str) -> pd.DataFrame:
         print("File is empty: " + file_path)
         return pd.DataFrame()
 
+    with open(file_path, 'r') as file:
+        if file.read().startswith("BigQuery error"):
+            print("File has error: " + file_path)
+            return pd.DataFrame()
+
     # try to read in the data
     df_result = pd.read_csv(file_path, dtype = "str")
+
+    print("==================== raw data =========================")
+    print(df_result)
+    print("=======================================================\n")
 
     if df_result.empty:
         print("File is empty: " + file_path)
@@ -200,7 +215,9 @@ def get_scg_data(id: str, data_type: str) -> pd.DataFrame:
             df_result[['Start_Date','Start_Time']] = df_result["datetime"].str.split(n=1, expand=True)
         else:
             df_result[['Start_Date','Start_Time']] = df_result["start_datetime"].str.split(n=1, expand=True)
-            df_result[['End_Date','End_Time']] = df_result["end_datetime"].str.split(n=1, expand=True)
+            # if the first row of end_datetime is NaN, does not do the conversion
+            if df_result.iloc[0]["end_datetime"] == "":
+                df_result[['End_Date','End_Time']] = df_result["end_datetime"].str.split(n=1, expand=True)
 
     df_result = df_result.rename(columns={"device": "Device", "heartrate": "Value", "steps": "Value"})
     
@@ -224,7 +241,7 @@ def data_joining(id: str):
         os.mkdir(OUTPUT_FOLDER_PATH)
 
     for data_format in data_formats:
-        print("=======================================================")
+        print("\n\n=======================================================")
         print("Starting " + id + " " + data_format)
         print("=======================================================")
         # get the data from the csv files
@@ -251,7 +268,7 @@ def data_joining(id: str):
 
         print("==================== joined sorted data =========================")
         print(data)
-        print("=================================================================")
+        print("=================================================================\n\n")
 
         # save the data as a csv file
         data.to_csv(os.path.join(output_folder_path, data_format + ".csv"), index = False)
