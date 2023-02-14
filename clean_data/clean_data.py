@@ -69,14 +69,10 @@ def clean_csvs(participant_id: str):
             if len(df_st_new) != 0:
                 df_st_new.to_csv(os.path.join(full_path_dst, "st.csv"), index=False)
 
-###### TO DO ########
 if __name__ == "__main__":
-    #### EDIT HERE, DEPENDING ON HOW BASH SCRIPT USES THIS .py FILE ####
-    # if command line format is: RHR.py [participant_id], then:
+    # get participant id from command line
     participant_id = os.path.basename(sys.argv[1])
+
     print("participant_id: ", participant_id)
-
-    ### EDIT THE ABOVE IF DIFFERNT FORMAT ### 
-
     clean_csvs(participant_id)
     print("Done extracting RHR for participant: ", participant_id)

@@ -82,7 +82,8 @@ def get_csv_data(file_path: str, data_type: str) -> pd.DataFrame:
         return pd.DataFrame()
     
     with open(file_path, 'r') as file:
-        if file.read().startswith("BigQuery error"):
+        content = file.read()
+        if content.startswith("BigQuery error") or content.startswith("         Error in query string"):
             print("File has error: " + file_path)
             return pd.DataFrame()
     
